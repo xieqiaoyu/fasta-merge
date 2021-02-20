@@ -6,12 +6,15 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/xieqiaoyu/fasta-merge/metadata"
 )
 
 var usageStr = `
 Usage: fasta-merge [options] FILE1 [FILE2] ...
 Options:
      -o --output <filepath>     file path to output result, default: ./merge.fasta
+     -v --version               show version
 `
 
 func usage() {
@@ -46,7 +49,14 @@ func main() {
 
 	fs.StringVar(&outputFile, "o", "./merge.fasta", "")
 	fs.StringVar(&outputFile, "output", "./merge.fasta", "")
+	var showVersion bool
+	fs.BoolVar(&showVersion, "v", false, "")
+	fs.BoolVar(&showVersion, "version", false, "")
 	fs.Parse(os.Args[1:])
+	if showVersion {
+		metadata.ShowVersion()
+		return
+	}
 	fileNames := fs.Args()
 	if len(fileNames) <= 0 {
 		usage()

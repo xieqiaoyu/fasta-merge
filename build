@@ -1,8 +1,9 @@
 #! /usr/bin/env bash
 tag=$(git describe --tags|xargs)
 moduleName=github.com/xieqiaoyu/hush
-#BUILDOS=windows
-BUILDOS=darwin
+BUILDOS=windows
+#BUILDOS=darwin
+#BUILDOS=linux
 BUILDARCH=amd64
 
 binName="fasta-merge"
