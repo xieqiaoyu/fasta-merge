@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+tag=$(git describe --tags|xargs)
+moduleName=github.com/xieqiaoyu/hush
+#BUILDOS=windows
+BUILDOS=darwin
+BUILDARCH=amd64
+
+binName="fasta-merge"
+if [ $BUILDOS = "windows" ]; then
+	binName+='.exe'
+fi
+
+CGO_ENABLED=0 GOOS=${BUILDOS} GOARCH=${BUILDARCH} go build -ldflags "-X '${moduleName}/metadata.Version=${tag}' -X '${moduleName}/metadata.Platform=${BUILDOS}/${BUILDARCH}' -s -w" -o artifact/${binName} .
