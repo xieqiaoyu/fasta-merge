@@ -1,14 +1,39 @@
 #! /usr/bin/env bash
+# TODO case no tag
 tag=$(git describe --tags|xargs)
-moduleName=github.com/xieqiaoyu/hush
-BUILDOS=windows
-#BUILDOS=darwin
-#BUILDOS=linux
+# TODO get go module name form go.mod
+moduleName=github.com/xieqiaoyu/fasta-merge
+
+case $1 in
+w|windows)
+    BUILDOS=windows
+    ;;
+m|mac|darwin)
+    BUILDOS=darwin
+    ;;
+l|linux)
+    BUILDOS=linux
+    ;;
+esac
+
+# auto detect build os
+if [ -z "$BUILDOS" ]; then
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        BUILDOS=linux
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+	    BUILDOS=darwin
+	else
+	    echo Unknown system
+        exit 2
+	fi
+fi
+
 BUILDARCH=amd64
 
 binName="fasta-merge"
-if [ $BUILDOS = "windows" ]; then
-	binName+='.exe'
-fi
 
-CGO_ENABLED=0 GOOS=${BUILDOS} GOARCH=${BUILDARCH} go build -ldflags "-X '${moduleName}/metadata.Version=${tag}' -X '${moduleName}/metadata.Platform=${BUILDOS}/${BUILDARCH}' -s -w" -o artifact/${binName} .
+CGO_ENABLED=0 GOOS=${BUILDOS} GOARCH=${BUILDARCH} go build -trimpath -ldflags "-X '${moduleName}/metadata.Version=${tag}' -X '${moduleName}/metadata.Platform=${BUILDOS}/${BUILDARCH}' -s -w" -o artifact/${binName} .
+
+if [ $BUILDOS = "windows" ]; then
+	mv artifact/${binName} artifact/${binName}.exe
+fi
