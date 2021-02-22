@@ -15,37 +15,43 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    strategy:
+      matrix:
+        # Include amd64 on all platforms.
+        goos: [windows,linux, darwin]
+        goarch: [amd64]
+      fail-fast: false
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
+      moduleName: github.com/xieqiaoyu/fasta-merge
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: make go env
         uses: actions/setup-go@v2
         with:
           go-version: "1.15"
-      - name: build binary
-        run: ./build windows
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      - name: Build Binary
+        run: |
+          go build -trimpath -ldflags "-X '${moduleName}/metadata.Version=${{ github.ref }}' -X '${moduleName}/metadata.Platform=${GOOS}/${GOARCH}' -s -w" -o artifact/fasta-merge .
+      - name: Windows Rename
+        if: matrix.goos == 'windows'
+        run: |
+          cd ./artifact || exit 1
+          mv fasta-merge fasta-merge.exe
+      - name: Upload files to GitHub release
+        uses: svenstaro/upload-release-action@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          prerelease: false
-          draft: false
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./artifact/fasta-merge.exe
-          asset_name: fasta-merge.exe
-          asset_content_type: application/octet-stream
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: ./artifact/fasta-merge*
+          tag: ${{ github.ref }}
