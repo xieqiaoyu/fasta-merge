@@ -42,12 +42,13 @@ jobs:
           go-version: "1.15"
       - name: Build Binary
         run: |
-          go build -trimpath -ldflags "-X '${moduleName}/metadata.Version=${{ github.ref }}' -X '${moduleName}/metadata.Platform=${GOOS}/${GOARCH}' -s -w" -o artifact/fasta-merge .
+          go build -trimpath -ldflags "-X '${moduleName}/metadata.Version=${{ github.ref }}' -X '${moduleName}/metadata.Platform=${GOOS}/${GOARCH}' -s -w" -o artifact/fasta-merge_${GOOS}_${GOARCH} .
       - name: Windows Rename
         if: matrix.goos == 'windows'
         run: |
           cd ./artifact || exit 1
-          mv fasta-merge fasta-merge.exe
+          mv fasta-merge_${GOOS}_${GOARCH} fasta-merge_${GOOS}_${GOARCH}.exe
+      
       - name: Upload files to GitHub release
         uses: svenstaro/upload-release-action@v2
         with:
